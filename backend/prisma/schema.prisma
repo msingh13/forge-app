@@ -1,0 +1,93 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum ExperienceLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+enum LookingFor {
+  IDEA
+  TEAM
+  BOTH
+}
+
+enum IdeaStage {
+  IDEA
+  MVP
+  STARTUP
+}
+
+enum CommitmentLevel {
+  CASUAL
+  SERIOUS
+  INTENSE
+}
+
+enum InterestStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+}
+
+model User {
+  id              String   @id @default(cuid())
+  name            String
+  email           String   @unique
+  passwordHash    String
+  school          String
+  program         String?
+  skills          String[] @default([])
+  experienceLevel ExperienceLevel @default(BEGINNER)
+  lookingFor      LookingFor @default(BOTH)
+  createdAt       DateTime @default(now())
+
+  ideas           Idea[]   @relation("UserIdeas")
+  interests       Interest[]
+  messages        Message[]
+}
+
+model Idea {
+  id              String   @id @default(cuid())
+  ownerId         String
+  title           String
+  description     String
+  stage           IdeaStage @default(IDEA)
+  rolesNeeded     String[] @default([])
+  commitmentLevel CommitmentLevel @default(CASUAL)
+  createdAt       DateTime @default(now())
+
+  owner           User     @relation("UserIdeas", fields: [ownerId], references: [id])
+  interests       Interest[]
+  messages        Message[]
+}
+
+model Interest {
+  id        String         @id @default(cuid())
+  userId    String
+  ideaId    String
+  status    InterestStatus @default(PENDING)
+  createdAt DateTime       @default(now())
+
+  user      User @relation(fields: [userId], references: [id])
+  idea      Idea @relation(fields: [ideaId], references: [id])
+
+  @@unique([userId, ideaId])
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  ideaId    String
+  senderId  String
+  content   String
+  createdAt DateTime @default(now())
+
+  idea      Idea @relation(fields: [ideaId], references: [id])
+  sender    User @relation(fields: [senderId], references: [id])
+}
